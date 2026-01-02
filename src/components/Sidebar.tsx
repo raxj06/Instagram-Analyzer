@@ -2,11 +2,13 @@ import { NavLink } from 'react-router-dom'
 import {
     Search,
     TrendingUp,
-    Instagram
+    Instagram,
+    Hash
 } from 'lucide-react'
 
 const navItems = [
     { path: '/', label: 'Search', icon: Search },
+    { path: '/hashtag', label: 'Hashtag Search', icon: Hash },
 ]
 
 export default function Sidebar() {

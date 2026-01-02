@@ -368,3 +368,117 @@ export async function analyzeInstagramProfile(username: string): Promise<Analyze
 export function isApiConfigured(): boolean {
     return !!(INSTAGRAM_ACCOUNT_ID && ACCESS_TOKEN);
 }
+
+// ==========================================
+// HASHTAG SEARCH API
+// ==========================================
+
+export interface HashtagMedia {
+    id: string;
+    caption?: string;
+    like_count?: number;
+    comments_count?: number;
+    media_type: 'IMAGE' | 'VIDEO' | 'CAROUSEL_ALBUM';
+    media_url?: string;
+    permalink: string;
+    timestamp: string;
+}
+
+export interface HashtagSearchResult {
+    hashtagId: string;
+    hashtagName: string;
+    media: HashtagMedia[];
+    mediaCount: number;
+    avgLikes: number;
+    avgComments: number;
+}
+
+// Search for a hashtag and get its ID
+export async function searchHashtagId(hashtag: string): Promise<string | null> {
+    if (!INSTAGRAM_ACCOUNT_ID || !ACCESS_TOKEN) {
+        throw new Error('Instagram API credentials not configured.');
+    }
+
+    // Remove # if present and clean the hashtag
+    const cleanHashtag = hashtag.replace(/^#/, '').trim().toLowerCase();
+
+    const url = `${API_BASE}/ig_hashtag_search?user_id=${INSTAGRAM_ACCOUNT_ID}&q=${encodeURIComponent(cleanHashtag)}&access_token=${ACCESS_TOKEN}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Hashtag search error:', data);
+            throw new Error(data.error?.message || 'Failed to search hashtag');
+        }
+
+        if (data.data && data.data.length > 0) {
+            return data.data[0].id;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Hashtag search error:', error);
+        throw error;
+    }
+}
+
+// Get media for a hashtag (top or recent)
+export async function getHashtagMedia(
+    hashtagId: string,
+    type: 'top' | 'recent' = 'top',
+    limit: number = 25
+): Promise<HashtagMedia[]> {
+    if (!INSTAGRAM_ACCOUNT_ID || !ACCESS_TOKEN) {
+        throw new Error('Instagram API credentials not configured.');
+    }
+
+    const endpoint = type === 'top' ? 'top_media' : 'recent_media';
+    const fields = 'id,caption,like_count,comments_count,media_type,media_url,permalink,timestamp';
+
+    const url = `${API_BASE}/${hashtagId}/${endpoint}?user_id=${INSTAGRAM_ACCOUNT_ID}&fields=${fields}&limit=${limit}&access_token=${ACCESS_TOKEN}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Hashtag media error:', data);
+            throw new Error(data.error?.message || 'Failed to get hashtag media');
+        }
+
+        return data.data || [];
+    } catch (error) {
+        console.error('Hashtag media error:', error);
+        throw error;
+    }
+}
+
+// Full hashtag search with stats
+export async function searchHashtag(hashtag: string, type: 'top' | 'recent' = 'top'): Promise<HashtagSearchResult> {
+    const cleanHashtag = hashtag.replace(/^#/, '').trim().toLowerCase();
+
+    // Step 1: Get hashtag ID
+    const hashtagId = await searchHashtagId(cleanHashtag);
+
+    if (!hashtagId) {
+        throw new Error(`Hashtag #${cleanHashtag} not found`);
+    }
+
+    // Step 2: Get media
+    const media = await getHashtagMedia(hashtagId, type, 30);
+
+    // Step 3: Calculate stats
+    const totalLikes = media.reduce((sum, m) => sum + (m.like_count || 0), 0);
+    const totalComments = media.reduce((sum, m) => sum + (m.comments_count || 0), 0);
+
+    return {
+        hashtagId,
+        hashtagName: cleanHashtag,
+        media,
+        mediaCount: media.length,
+        avgLikes: media.length > 0 ? Math.round(totalLikes / media.length) : 0,
+        avgComments: media.length > 0 ? Math.round(totalComments / media.length) : 0,
+    };
+}

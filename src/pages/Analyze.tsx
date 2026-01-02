@@ -460,25 +460,234 @@ export default function Analyze() {
         </ChartCard>
       </div>
 
-      {/* Trending Hashtags - sorted by engagement */}
+      {/* Enhanced Hashtag Analyzer */}
       {data.metrics.topHashtags.length > 0 && (
-        <ChartCard title="Trending Hashtags" subtitle="Sorted by average engagement per post">
-          <div className="hashtags-grid">
-            {data.metrics.topHashtags.map((tag: { tag: string; count: number; avgEngagement: number }, index: number) => (
-              <div key={tag.tag} className="hashtag-item">
-                <span className="hashtag-rank">#{index + 1}</span>
-                <span className="hashtag-name">
-                  <Hash size={14} />
-                  {tag.tag}
-                </span>
-                <div className="hashtag-stats">
-                  <span className="hashtag-count">{tag.count} posts</span>
-                  <span className="hashtag-engagement">{formatNumber(tag.avgEngagement)} avg</span>
-                </div>
+        <div className="hashtag-analyzer-section">
+          <ChartCard title="📊 Hashtag Performance Analyzer" subtitle="Detailed breakdown of hashtag effectiveness">
+            {/* Summary Stats */}
+            <div className="hashtag-summary">
+              <div className="summary-stat">
+                <span className="summary-value">{data.metrics.topHashtags.length}</span>
+                <span className="summary-label">Unique Hashtags</span>
               </div>
-            ))}
-          </div>
-        </ChartCard>
+              <div className="summary-stat highlight">
+                <span className="summary-value">#{data.metrics.topHashtags[0]?.tag}</span>
+                <span className="summary-label">Top Performer</span>
+              </div>
+              <div className="summary-stat">
+                <span className="summary-value">
+                  {formatNumber(Math.round(data.metrics.topHashtags.reduce((sum: number, h: { avgEngagement: number }) => sum + h.avgEngagement, 0) / data.metrics.topHashtags.length))}
+                </span>
+                <span className="summary-label">Avg Engagement</span>
+              </div>
+            </div>
+
+            {/* Bar Chart */}
+            <div style={{ width: '100%', height: 280, marginTop: 'var(--spacing-lg)' }}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <BarChart
+                  data={data.metrics.topHashtags.slice(0, 8).map((h: { tag: string; avgEngagement: number; count: number }) => ({
+                    name: '#' + h.tag.substring(0, 12) + (h.tag.length > 12 ? '...' : ''),
+                    engagement: h.avgEngagement,
+                    posts: h.count
+                  }))}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                  <XAxis type="number" tickFormatter={(value) => formatNumber(value)} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    formatter={(value) => [formatNumber(value as number), 'Avg Engagement']}
+                    contentStyle={{
+                      background: 'var(--bg-primary)',
+                      border: '1px solid var(--border-light)',
+                      borderRadius: 'var(--radius-md)'
+                    }}
+                  />
+                  <Bar dataKey="engagement" fill="url(#hashtagGradient)" radius={[0, 4, 4, 0]} />
+                  <defs>
+                    <linearGradient id="hashtagGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#833AB4" />
+                      <stop offset="50%" stopColor="#E1306C" />
+                      <stop offset="100%" stopColor="#F77737" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Detailed List */}
+            <div className="hashtag-detailed-list">
+              <h4 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+                Detailed Breakdown
+              </h4>
+              {data.metrics.topHashtags.map((tag: { tag: string; count: number; avgEngagement: number }, index: number) => {
+                const maxEngagement = data.metrics.topHashtags[0]?.avgEngagement || 1;
+                const performancePercent = Math.round((tag.avgEngagement / maxEngagement) * 100);
+                const isTopPerformer = index === 0;
+                const isHighPerformer = performancePercent >= 70;
+
+                return (
+                  <div key={tag.tag} className={`hashtag-detail-item ${isTopPerformer ? 'top-performer' : ''}`}>
+                    <div className="hashtag-detail-left">
+                      <span className="hashtag-rank-badge" style={{
+                        background: isTopPerformer ? 'var(--accent-instagram)' : isHighPerformer ? 'var(--accent-purple)' : 'var(--bg-secondary)'
+                      }}>
+                        {index + 1}
+                      </span>
+                      <div className="hashtag-detail-info">
+                        <span className="hashtag-detail-name">
+                          <Hash size={14} />
+                          {tag.tag}
+                          {isTopPerformer && <span className="top-badge">🏆 Best</span>}
+                        </span>
+                        <span className="hashtag-usage">{tag.count} {tag.count === 1 ? 'post' : 'posts'}</span>
+                      </div>
+                    </div>
+                    <div className="hashtag-detail-right">
+                      <div className="performance-bar-container">
+                        <div
+                          className="performance-bar"
+                          style={{
+                            width: `${performancePercent}%`,
+                            background: isTopPerformer ? 'var(--accent-instagram)' : isHighPerformer ? 'var(--accent-purple)' : 'var(--accent-blue)'
+                          }}
+                        />
+                      </div>
+                      <span className="engagement-number">{formatNumber(tag.avgEngagement)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ChartCard>
+
+          <style>{`
+            .hashtag-analyzer-section {
+              margin-top: var(--spacing-lg);
+            }
+            .hashtag-summary {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: var(--spacing-md);
+              padding: var(--spacing-md);
+              background: var(--bg-secondary);
+              border-radius: var(--radius-md);
+              margin-bottom: var(--spacing-md);
+            }
+            .summary-stat {
+              text-align: center;
+            }
+            .summary-stat.highlight {
+              background: linear-gradient(135deg, rgba(131, 58, 180, 0.1), rgba(225, 48, 108, 0.1));
+              padding: var(--spacing-sm);
+              border-radius: var(--radius-sm);
+            }
+            .summary-value {
+              display: block;
+              font-size: var(--font-size-lg);
+              font-weight: var(--font-weight-bold);
+              color: var(--text-primary);
+            }
+            .summary-label {
+              font-size: var(--font-size-xs);
+              color: var(--text-tertiary);
+            }
+            .hashtag-detailed-list {
+              margin-top: var(--spacing-lg);
+              border-top: 1px solid var(--border-light);
+              padding-top: var(--spacing-lg);
+            }
+            .hashtag-detail-item {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: var(--spacing-sm) var(--spacing-md);
+              margin-bottom: var(--spacing-xs);
+              border-radius: var(--radius-md);
+              transition: background var(--transition-fast);
+            }
+            .hashtag-detail-item:hover {
+              background: var(--bg-secondary);
+            }
+            .hashtag-detail-item.top-performer {
+              background: linear-gradient(135deg, rgba(225, 48, 108, 0.05), rgba(247, 119, 55, 0.05));
+              border: 1px solid rgba(225, 48, 108, 0.2);
+            }
+            .hashtag-detail-left {
+              display: flex;
+              align-items: center;
+              gap: var(--spacing-sm);
+            }
+            .hashtag-rank-badge {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: var(--font-size-xs);
+              font-weight: var(--font-weight-semibold);
+              color: white;
+            }
+            .hashtag-detail-info {
+              display: flex;
+              flex-direction: column;
+            }
+            .hashtag-detail-name {
+              display: flex;
+              align-items: center;
+              gap: var(--spacing-xs);
+              font-weight: var(--font-weight-medium);
+              color: var(--text-primary);
+            }
+            .top-badge {
+              font-size: 10px;
+              background: linear-gradient(135deg, #833AB4, #E1306C);
+              color: white;
+              padding: 2px 6px;
+              border-radius: 10px;
+              margin-left: var(--spacing-xs);
+            }
+            .hashtag-usage {
+              font-size: var(--font-size-xs);
+              color: var(--text-tertiary);
+            }
+            .hashtag-detail-right {
+              display: flex;
+              align-items: center;
+              gap: var(--spacing-md);
+              min-width: 180px;
+            }
+            .performance-bar-container {
+              flex: 1;
+              height: 8px;
+              background: var(--bg-secondary);
+              border-radius: 4px;
+              overflow: hidden;
+            }
+            .performance-bar {
+              height: 100%;
+              border-radius: 4px;
+              transition: width 0.3s ease;
+            }
+            .engagement-number {
+              font-weight: var(--font-weight-semibold);
+              color: var(--text-primary);
+              min-width: 60px;
+              text-align: right;
+            }
+            @media (max-width: 768px) {
+              .hashtag-summary {
+                grid-template-columns: 1fr;
+              }
+              .hashtag-detail-right {
+                min-width: 120px;
+              }
+            }
+          `}</style>
+        </div>
       )}
 
       {/* Mention Network */}
