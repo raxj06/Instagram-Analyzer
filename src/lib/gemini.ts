@@ -28,28 +28,7 @@ export interface AIAnalysisResult {
     recommendations: string[];
 }
 
-// Theme colors for visualization
-const THEME_COLORS: Record<string, string> = {
-    'Product/Promotional': '#E1306C',
-    'Product Promotion (Joyspoon Mukhwas)': '#E1306C',
-    'Lifestyle': '#833AB4',
-    'Educational': '#3B82F6',
-    'Behind-the-scenes': '#F77737',
-    'User-generated': '#10B981',
-    'Inspirational': '#8B5CF6',
-    'Social Impact/Donation': '#8B5CF6',
-    'Entertainment': '#EC4899',
-    'News/Updates': '#6366F1',
-    'Business/Startup Life': '#6366F1',
-    'Business/Startup Journey': '#6366F1',
-    'Teamwork/Company Culture': '#10B981',
-    'Teamwork and Collaboration': '#10B981',
-    'Challenges/Overcoming Obstacles': '#F77737',
-    'Overcoming Challenges': '#F77737',
-    'Festive Season (Christmas/New Year)': '#EC4899',
-    'Festive Season/Christmas': '#EC4899',
-    'Other': '#6B7280',
-};
+
 
 // Analyze captions via n8n webhook
 export async function analyzeWithGemini(captions: string[]): Promise<AIAnalysisResult | null> {

@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Loader2,
   Sparkles,
-  Brain,
   Lightbulb,
   Database
 } from 'lucide-react'

@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom'
 import {
     Search,
     TrendingUp,
-    Clock,
     Instagram
 } from 'lucide-react'
 

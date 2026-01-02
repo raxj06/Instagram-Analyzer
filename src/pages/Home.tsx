@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, TrendingUp, Users, BarChart3, Clock, ArrowRight } from 'lucide-react'
-import { recentSearches, formatNumber } from '../data/sampleData'
+import { recentSearches } from '../data/sampleData'
 
 export default function Home() {
     const [username, setUsername] = useState('')
