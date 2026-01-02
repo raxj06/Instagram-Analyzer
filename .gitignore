@@ -1,0 +1,25 @@
+# Environment variables (don't commit this!)
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules
+
+# Build
+dist
+dist-ssr
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
